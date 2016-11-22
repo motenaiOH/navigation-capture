@@ -1,0 +1,14 @@
+{
+  "name": "navigation-capture",
+  "vendor": "vtex",
+  "version": "0.1.0",
+  "title": "Navigation Capture Client",
+  "description": "A client for VTEX RC",
+  "mustUpdateAt": "2017-11-22",
+  "categories": [],
+  "settingsSchema": {},
+  "dependencies": {
+    "vtex.render": "0.x",
+    "npm:uuid": "3.0.0"
+  }
+}
