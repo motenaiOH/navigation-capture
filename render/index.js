@@ -42,10 +42,10 @@ function sendPerformanceData () {
     try {
       var timingRequest = {}
       timingRequest.DataType = 'Timing'
-      timingRequest.Url = window.location.href
-      timingRequest.HostName = window.location.hostname
-      timingRequest.Ref = location.Referrer()
-      timingRequest.Path = location.Path()
+      timingRequest.Url = location.href()
+      timingRequest.HostName = location.hostname()
+      timingRequest.Ref = location.referrer()
+      timingRequest.Path = location.path()
 
       if (typeof performance === 'object') {
         var t = performance.timing
@@ -105,7 +105,7 @@ function setVtexCookie (cookieName, cookieValue, duration) {
   var today = new Date()
   var expire = new Date()
   expire.setTime(today.getTime() + duration)
-  var host = window.location.hostname
+  var host = location.hostname()
   host = host.substring(host.indexOf('.') + 1, host.length)
   document.cookie = cookieName + '=' + escape(cookieValue) + ';expires=' + expire.toGMTString() + '; path=/; domain=' + host
 }
@@ -113,10 +113,10 @@ function setVtexCookie (cookieName, cookieValue, duration) {
 function sendErrorEvent ({message}) {
   var errorRequest = {}
   errorRequest.DataType = 'Error'
-  errorRequest.Url = window.location.href
-  errorRequest.HostName = window.location.hostname
-  errorRequest.Ref = location.Referrer()
-  errorRequest.Path = location.Path()
+  errorRequest.Url = location.href()
+  errorRequest.HostName = location.hostname()
+  errorRequest.Ref = location.referrer()
+  errorRequest.Path = location.path()
   errorRequest.SessionId = parameters.sessionId
   errorRequest.ErrorMessage = message
   submitRequest('GET', errorRequest)
@@ -279,10 +279,10 @@ function prepareRequestObject (name, data) {
       requestData.RCVersion = version
       requestData.PageLoadCount = parameters.pageLoadCounter
       requestData.EventCount = parseInt(parameters.eventCounter) + 1
-      requestData.Url = location.Href()
-      requestData.Ref = location.Referrer()
-      requestData.Path = location.Path()
-      requestData.HostName = window.location.hostname
+      requestData.Url = location.href()
+      requestData.Ref = location.referrer()
+      requestData.Path = location.path()
+      requestData.HostName = location.hostname()
       requestData.Utmcmd = parameters.utmcmd
       requestData.Utmcsr = parameters.utmcsr
       requestData.Utmctr = parameters.utmctr
@@ -311,10 +311,10 @@ function sendHashChange () {
   try {
     var hashChangeRequest = {}
     hashChangeRequest.DataType = 'HashChange'
-    hashChangeRequest.Url = window.location.href
-    hashChangeRequest.HostName = window.location.hostname
-    hashChangeRequest.Ref = location.Referrer()
-    hashChangeRequest.Path = location.Path()
+    hashChangeRequest.Url = location.href()
+    hashChangeRequest.HostName = location.hostname()
+    hashChangeRequest.Ref = location.referrer()
+    hashChangeRequest.Path = location.path()
     hashChangeRequest.SessionId = parameters.sessionId
     hashChangeRequest.Workspace = parameters.workspace
     hashChangeRequest.UserToken = parameters.userToken
@@ -327,22 +327,8 @@ function sendHashChange () {
   }
 }
 
-function sendEvent (name, data, verb = 'GET') {
-  try {
-    parameters.wereEventsCaptured = true
-    var navigationData = prepareRequestObject(name, data)
-    submitRequest(verb, navigationData, function (error) {
-      if (!parameters.sessionSended && !error) {
-        setVtexCookie(parameters.sessionIdCookie, '1:' + parameters.sessionId, 1800000)
-      }
-    })
-  } catch (e) {
-    sendErrorEvent(e)
-  }
-}
-
 function prepareUrl () {
-  return location.Protocol() + endpoint + (location.Protocol() === 'https:' ? securePort : port)
+  return location.protocol() + endpoint + (location.protocol() === 'https:' ? securePort : port)
 }
 
 function sendBeaconRequest (url, body, callback) {
@@ -396,17 +382,20 @@ function getXHRObject () {
 }
 
 const location = {
-  Href: function () {
+  href: function () {
     return window.location.href
   },
-  Referrer: function () {
+  referrer: function () {
     return window.document.referrer
   },
-  Protocol: function () {
+  protocol: function () {
     return window.location.protocol
   },
-  Path: function () {
+  path: function () {
     return window.location.pathname
+  },
+  hostname: function () {
+    return window.location.hostname
   },
 }
 
@@ -425,8 +414,24 @@ function run () {
   }
 }
 
-run()
+export function sendEvent (name, data = {}, verb = 'GET') {
+  try {
+    parameters.wereEventsCaptured = true
+    var navigationData = prepareRequestObject(name, data)
+    submitRequest(verb, navigationData, function (error) {
+      if (!parameters.sessionSended && !error) {
+        setVtexCookie(parameters.sessionIdCookie, '1:' + parameters.sessionId, 1800000)
+      }
+    })
+  } catch (e) {
+    sendErrorEvent(e)
+  }
+}
 
-export default {
-  sendEvent,
+if (
+	typeof window !== 'undefined' &&
+	window.document &&
+	window.document.createElement
+) {
+  run()
 }
